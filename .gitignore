@@ -1,0 +1,14 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/WorkBreakReminder.Sol/.vs/WorkBreakReminder
+/WorkBreakReminder.Sol/WorkBreakReminder.Core/bin/Debug/net5.0
+/WorkBreakReminder.Sol/WorkBreakReminder/.vs/WorkBreakReminder
+/WorkBreakReminder.Sol/WorkBreakReminder/bin/Debug/net5.0-windows
+/WorkBreakReminder.Sol/WorkBreakReminder/obj
+/WorkBreakReminder.Sol/WorkBreakReminder/WorkBreakReminder.csproj.user
+/WorkBreakReminder.Sol/WorkBreakReminder.Core/obj
+/WorkBreakReminder.Sol/WorkBreakReminder.Core.Tests/bin
+/WorkBreakReminder.Sol/WorkBreakReminder.Core.Tests/obj
