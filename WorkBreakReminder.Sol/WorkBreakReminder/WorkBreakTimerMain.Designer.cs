@@ -33,8 +33,8 @@ namespace WorkBreakReminder
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(mainForm));
             this.tabControl = new System.Windows.Forms.TabControl();
             this.tabSettings = new System.Windows.Forms.TabPage();
-            this.resetAllSettingsButton = new System.Windows.Forms.Button();
             this.settingsGroupbox = new System.Windows.Forms.GroupBox();
+            this.resetAllSettingsButton = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.changeMusicButton = new System.Windows.Forms.Button();
@@ -42,6 +42,7 @@ namespace WorkBreakReminder
             this.label1 = new System.Windows.Forms.Label();
             this.intervalSettingsUpDownControl = new System.Windows.Forms.NumericUpDown();
             this.detailsGroupBox = new System.Windows.Forms.GroupBox();
+            this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.reminderInfoLabel = new System.Windows.Forms.Label();
             this.musicFileOpenDialog = new System.Windows.Forms.OpenFileDialog();
             this.systemTrayIcon = new System.Windows.Forms.NotifyIcon(this.components);
@@ -50,6 +51,7 @@ namespace WorkBreakReminder
             this.settingsGroupbox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.intervalSettingsUpDownControl)).BeginInit();
             this.detailsGroupBox.SuspendLayout();
+            this.flowLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl
@@ -58,48 +60,48 @@ namespace WorkBreakReminder
             this.tabControl.Location = new System.Drawing.Point(1, 5);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(524, 342);
+            this.tabControl.Size = new System.Drawing.Size(524, 396);
             this.tabControl.TabIndex = 2;
             // 
             // tabSettings
             // 
-            this.tabSettings.Controls.Add(this.resetAllSettingsButton);
             this.tabSettings.Controls.Add(this.settingsGroupbox);
             this.tabSettings.Controls.Add(this.detailsGroupBox);
             this.tabSettings.Location = new System.Drawing.Point(4, 37);
             this.tabSettings.Name = "tabSettings";
             this.tabSettings.Padding = new System.Windows.Forms.Padding(3);
-            this.tabSettings.Size = new System.Drawing.Size(516, 301);
+            this.tabSettings.Size = new System.Drawing.Size(516, 355);
             this.tabSettings.TabIndex = 0;
             this.tabSettings.Text = "Reminder";
             this.tabSettings.UseVisualStyleBackColor = true;
             // 
-            // resetAllSettingsButton
-            // 
-            this.resetAllSettingsButton.AutoSize = true;
-            this.resetAllSettingsButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.resetAllSettingsButton.Location = new System.Drawing.Point(191, 240);
-            this.resetAllSettingsButton.Name = "resetAllSettingsButton";
-            this.resetAllSettingsButton.Size = new System.Drawing.Size(256, 38);
-            this.resetAllSettingsButton.TabIndex = 14;
-            this.resetAllSettingsButton.Text = "&Reset all to default settings";
-            this.resetAllSettingsButton.UseVisualStyleBackColor = true;
-            this.resetAllSettingsButton.Click += new System.EventHandler(this.resetAllSettingsButton_Click);
-            // 
             // settingsGroupbox
             // 
+            this.settingsGroupbox.Controls.Add(this.resetAllSettingsButton);
             this.settingsGroupbox.Controls.Add(this.label3);
             this.settingsGroupbox.Controls.Add(this.label2);
             this.settingsGroupbox.Controls.Add(this.changeMusicButton);
             this.settingsGroupbox.Controls.Add(this.playMusicButton);
             this.settingsGroupbox.Controls.Add(this.label1);
             this.settingsGroupbox.Controls.Add(this.intervalSettingsUpDownControl);
-            this.settingsGroupbox.Location = new System.Drawing.Point(13, 121);
+            this.settingsGroupbox.Location = new System.Drawing.Point(9, 147);
             this.settingsGroupbox.Name = "settingsGroupbox";
             this.settingsGroupbox.Size = new System.Drawing.Size(501, 167);
             this.settingsGroupbox.TabIndex = 13;
             this.settingsGroupbox.TabStop = false;
             this.settingsGroupbox.Text = "Settings";
+            // 
+            // resetAllSettingsButton
+            // 
+            this.resetAllSettingsButton.AutoSize = true;
+            this.resetAllSettingsButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.resetAllSettingsButton.Location = new System.Drawing.Point(178, 123);
+            this.resetAllSettingsButton.Name = "resetAllSettingsButton";
+            this.resetAllSettingsButton.Size = new System.Drawing.Size(256, 38);
+            this.resetAllSettingsButton.TabIndex = 14;
+            this.resetAllSettingsButton.Text = "&Reset all to default settings";
+            this.resetAllSettingsButton.UseVisualStyleBackColor = true;
+            this.resetAllSettingsButton.Click += new System.EventHandler(this.resetAllSettingsButton_Click);
             // 
             // label3
             // 
@@ -178,18 +180,26 @@ namespace WorkBreakReminder
             // 
             // detailsGroupBox
             // 
-            this.detailsGroupBox.Controls.Add(this.reminderInfoLabel);
+            this.detailsGroupBox.Controls.Add(this.flowLayoutPanel1);
             this.detailsGroupBox.Location = new System.Drawing.Point(7, 16);
             this.detailsGroupBox.Name = "detailsGroupBox";
-            this.detailsGroupBox.Size = new System.Drawing.Size(507, 99);
+            this.detailsGroupBox.Size = new System.Drawing.Size(507, 129);
             this.detailsGroupBox.TabIndex = 10;
             this.detailsGroupBox.TabStop = false;
             this.detailsGroupBox.Text = "Next reminder";
             // 
+            // flowLayoutPanel1
+            // 
+            this.flowLayoutPanel1.Controls.Add(this.reminderInfoLabel);
+            this.flowLayoutPanel1.Location = new System.Drawing.Point(13, 33);
+            this.flowLayoutPanel1.Name = "flowLayoutPanel1";
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(488, 80);
+            this.flowLayoutPanel1.TabIndex = 9;
+            // 
             // reminderInfoLabel
             // 
             this.reminderInfoLabel.AutoSize = true;
-            this.reminderInfoLabel.Location = new System.Drawing.Point(6, 30);
+            this.reminderInfoLabel.Location = new System.Drawing.Point(3, 0);
             this.reminderInfoLabel.Name = "reminderInfoLabel";
             this.reminderInfoLabel.Size = new System.Drawing.Size(368, 28);
             this.reminderInfoLabel.TabIndex = 8;
@@ -211,20 +221,21 @@ namespace WorkBreakReminder
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(529, 350);
+            this.ClientSize = new System.Drawing.Size(529, 373);
             this.Controls.Add(this.tabControl);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "mainForm";
             this.Text = "Take a break";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.mainForm_FormClosing);
             this.Resize += new System.EventHandler(this.mainForm_Resize);
             this.tabControl.ResumeLayout(false);
             this.tabSettings.ResumeLayout(false);
-            this.tabSettings.PerformLayout();
             this.settingsGroupbox.ResumeLayout(false);
             this.settingsGroupbox.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.intervalSettingsUpDownControl)).EndInit();
             this.detailsGroupBox.ResumeLayout(false);
-            this.detailsGroupBox.PerformLayout();
+            this.flowLayoutPanel1.ResumeLayout(false);
+            this.flowLayoutPanel1.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -245,6 +256,7 @@ namespace WorkBreakReminder
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.NotifyIcon systemTrayIcon;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
     }
 }
 

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using WorkBreakReminder.Core.Model;
 
 namespace WorkBreakReminder.Core
 {
@@ -7,5 +7,8 @@ namespace WorkBreakReminder.Core
         void Save(TStorageData data, TDataKeyId dataId);
 
         TStorageData Get(TDataKeyId dataId);
+
+        IStorageValidationResult Validate(TDataKeyId dataId);
+
     }
 }

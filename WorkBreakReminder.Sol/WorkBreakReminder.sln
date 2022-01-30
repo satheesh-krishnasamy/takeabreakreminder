@@ -7,7 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkBreakReminder.Core", "W
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkBreakReminder", "WorkBreakReminder\WorkBreakReminder.csproj", "{AAD337D3-BEC3-46C3-A9D6-A20BBAA3F0A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkBreakReminder.Core.Tests", "WorkBreakReminder.Core.Tests\WorkBreakReminder.Core.Tests.csproj", "{7F994DDC-87F4-4B59-ACCE-AD219355D1B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkBreakReminder.Core.Storage.Extensions", "WorkBreakReminder.Core.Storage.File\WorkBreakReminder.Core.Storage.Extensions.csproj", "{49A04F4C-2341-4FFE-8175-B2622EEE7BBC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E59B30C5-B4B5-4E91-B0AA-FE41C2044DA6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkBreakReminder.Core.Storage.Extensions.Tests", "Tests\WorkBreakReminder.Core.Storage.Extensions.Tests\WorkBreakReminder.Core.Storage.Extensions.Tests.csproj", "{CF1F0AF5-6433-4632-9F4C-EE8D5E2DCDBB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkBreakReminder.Core.Tests", "Tests\WorkBreakReminder.Core.Tests\WorkBreakReminder.Core.Tests.csproj", "{BF74BF7B-489D-40BA-8B30-D26C8737563E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,13 +29,25 @@ Global
 		{AAD337D3-BEC3-46C3-A9D6-A20BBAA3F0A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AAD337D3-BEC3-46C3-A9D6-A20BBAA3F0A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AAD337D3-BEC3-46C3-A9D6-A20BBAA3F0A2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7F994DDC-87F4-4B59-ACCE-AD219355D1B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7F994DDC-87F4-4B59-ACCE-AD219355D1B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7F994DDC-87F4-4B59-ACCE-AD219355D1B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7F994DDC-87F4-4B59-ACCE-AD219355D1B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49A04F4C-2341-4FFE-8175-B2622EEE7BBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49A04F4C-2341-4FFE-8175-B2622EEE7BBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49A04F4C-2341-4FFE-8175-B2622EEE7BBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49A04F4C-2341-4FFE-8175-B2622EEE7BBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF1F0AF5-6433-4632-9F4C-EE8D5E2DCDBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF1F0AF5-6433-4632-9F4C-EE8D5E2DCDBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF1F0AF5-6433-4632-9F4C-EE8D5E2DCDBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF1F0AF5-6433-4632-9F4C-EE8D5E2DCDBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF74BF7B-489D-40BA-8B30-D26C8737563E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF74BF7B-489D-40BA-8B30-D26C8737563E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF74BF7B-489D-40BA-8B30-D26C8737563E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF74BF7B-489D-40BA-8B30-D26C8737563E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CF1F0AF5-6433-4632-9F4C-EE8D5E2DCDBB} = {E59B30C5-B4B5-4E91-B0AA-FE41C2044DA6}
+		{BF74BF7B-489D-40BA-8B30-D26C8737563E} = {E59B30C5-B4B5-4E91-B0AA-FE41C2044DA6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {62308943-B99C-4627-97D4-3486B1E4225A}

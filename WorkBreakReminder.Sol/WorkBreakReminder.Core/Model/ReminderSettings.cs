@@ -1,8 +1,16 @@
 ﻿namespace WorkBreakReminder.Core.Model
 {
-    public class ReminderSettings
+    public class ReminderSettings : IReminderSettingsReadOnly, IReminderSettings
     {
-        public string MusicFilePath { get; set; }
-        public ushort ReminderTimeInMinutes { get; set; }
+        public ReminderSettings() { }
+
+        public ReminderSettings(string musicFileLocation, ushort reminderIntervalInMinutes)
+        {
+            this.MusicLocation = musicFileLocation;
+            this.ReminderIntervalInMinutes = reminderIntervalInMinutes;
+        }
+
+        public string MusicLocation { get; set; }
+        public ushort ReminderIntervalInMinutes { get; set; }
     }
 }

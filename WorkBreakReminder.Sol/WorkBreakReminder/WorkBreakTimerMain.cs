@@ -1,115 +1,80 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.IO;
-using System.Linq;
-using System.Media;
-using System.Text;
-using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using System.Windows.Forms;
+using WorkBreakReminder.Config;
 using WorkBreakReminder.Core;
 using WorkBreakReminder.Core.Constants;
+using WorkBreakReminder.Core.Logic;
 using WorkBreakReminder.Core.Model;
-using WorkBreakReminder.Core.Utils;
+using WorkBreakReminder.Core.Storage.Extensions;
+using WorkBreakReminder.Core.View;
 
 namespace WorkBreakReminder
 {
-    public partial class mainForm : Form
+    public partial class mainForm : Form, IReminderView
     {
-        private readonly string USER_PREFERENCES_FILENAME = Path.Combine("workbreakreminder", "preferences.json");
-        private const string MUSIC_FULL_PATH_DEFAULT = @"c:\Windows\Media\chimes.wav";
-
         private readonly IReminderStorage<ReminderSettings, string> storage;
+        private readonly ReminderLogic reminderLogic;
+        private string musicLocation;
+        private bool viewInitialized;
 
-        private readonly System.Timers.Timer reminderTriggerTimer1;
-        private ReminderSettings defaultReminderSettings = null;
-
-        private ReminderSettings reminderSettings;
-
-        public mainForm()
+        public mainForm(IConfiguration appConfiguration)
         {
             InitializeComponent();
-
-            this.storage = new UserProfileFileStorage();
-
-            this.reminderTriggerTimer1 = new System.Timers.Timer();
-            this.reminderTriggerTimer1.Elapsed += new System.Timers.ElapsedEventHandler(OnTimerTimeElapsedEventAsync);
-
-            this.LoadSettings();
-            this.SetUIWithSettings();
+            var appSettings = appConfiguration.GetSection("appSettings").Get<AppSettings>();
+            this.storage = new UserProfileFileStorage<ReminderSettings>();
+            this.reminderLogic = new ReminderLogic(this, this.storage, new AppSettingsReadonly(appSettings));
+            this.reminderLogic.Initialize();
         }
 
-        private delegate void UpdateControlsDelegate();
+        private delegate void UpdateControlsDelegate(IReminderSettingsReadOnly args);
+        private delegate void UpdateSummaryDelegate(string args);
 
-        private void SetUIWithSettings()
+        private void SetUIWithSettings(IReminderSettingsReadOnly reminderSettings)
         {
-
             if (this.InvokeRequired)
             {
-                this.BeginInvoke(new UpdateControlsDelegate(UpdateControls));
+                this.BeginInvoke(new UpdateControlsDelegate(UpdateControls), reminderSettings);
             }
             else
             {
-                UpdateControls();
+                UpdateControls(reminderSettings);
             }
         }
 
-        private void UpdateControls()
+        private void UpdateControls(IReminderSettingsReadOnly args)
         {
-            intervalSettingsUpDownControl.Value = this.reminderSettings.ReminderTimeInMinutes;
-            resetAllSettingsButton.Enabled = !this.IsDefaultSettingsCurrent();
-
-            var nextReminderDateTime = DateTimeUtils.GetNextReminderDateTime(this.reminderSettings.ReminderTimeInMinutes);
-            this.reminderInfoLabel.Text = $"Next reminder is at {nextReminderDateTime.ToString("hh:mm tt", System.Globalization.CultureInfo.CurrentCulture)}.";
-            ResetTimerTimeout();
-            ShowAppInNormalWindowSize();
-        }
-
-
-
-        private void ResetTimerTimeout()
-        {
-            reminderTriggerTimer1.Stop();
-            var alarmTimeFromNow = (DateTimeUtils.GetNextReminderDateTime(this.reminderSettings.ReminderTimeInMinutes) - DateTime.Now).TotalMilliseconds;
-            reminderTriggerTimer1.Interval = alarmTimeFromNow;
-            reminderTriggerTimer1.Start();
-        }
-
-        private async void OnTimerTimeElapsedEventAsync(object sender, ElapsedEventArgs e)
-        {
-            await this.PlayReminderMusicAsync().ConfigureAwait(false);
-            this.SetUIWithSettings();
-        }
-
-        private void LoadSettings()
-        {
-            try
+            //if (args != null && args.Length > 0)
             {
-                reminderSettings = this.storage.Get(USER_PREFERENCES_FILENAME);
-                if (!this.ValidateUserPreferences(reminderSettings))
-                {
-                    this.LoadDefaultSettings();
-                }
-            }
-            catch
-            {
-                this.LoadDefaultSettings();
-            }
-        }
-
-        private void SavePreferences()
-        {
-            try
-            {
+                var reminderSettings = args;// args[0] as IReminderSettingsReadOnly;
                 if (reminderSettings != null)
                 {
-                    this.storage.Save(this.reminderSettings, USER_PREFERENCES_FILENAME);
+                    intervalSettingsUpDownControl.Value = reminderSettings.ReminderIntervalInMinutes;
+                    this.musicLocation = reminderSettings.MusicLocation;
                 }
+            }
+        }
+
+        private async void DoMinimizeWindowAsync()
+        {
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                ShowAppInNormalWindowSize();
+                await Task.Delay(1000);
+                this.WindowState = FormWindowState.Minimized;
+                this.Hide();
+            }
+        }
+
+        private async Task SavePreferencesAsync()
+        {
+            try
+            {
+                await this.reminderLogic.SaveSettingsAsync(
+                    new ReminderSettings(this.musicLocation, decimal.ToUInt16(intervalSettingsUpDownControl.Value)))
+                    ;
             }
             catch (Exception exp)
             {
@@ -123,112 +88,51 @@ namespace WorkBreakReminder
         private bool ValidateUserPreferences(ReminderSettings userPreferences)
         {
             return !(userPreferences == null
-                || string.IsNullOrWhiteSpace(userPreferences.MusicFilePath)
-                || !File.Exists(userPreferences.MusicFilePath)
-                || userPreferences.ReminderTimeInMinutes < AppConstants.REMINDER_INTERVAL_MINIMUM
-                || userPreferences.ReminderTimeInMinutes > AppConstants.REMINDER_INTERVAL_MAXMUM);
+                || string.IsNullOrWhiteSpace(userPreferences.MusicLocation)
+                || !File.Exists(userPreferences.MusicLocation)
+                || userPreferences.ReminderIntervalInMinutes < AppConstants.REMINDER_INTERVAL_MINIMUM
+                || userPreferences.ReminderIntervalInMinutes > AppConstants.REMINDER_INTERVAL_MAXMUM);
         }
 
-        private void LoadDefaultSettings()
+        private async void intervalSettingsUpDownControl_ValueChanged(object sender, EventArgs e)
         {
-            if (this.defaultReminderSettings == null)
+            if (this.viewInitialized)
             {
-                this.defaultReminderSettings = new ReminderSettings()
-                {
-                    MusicFilePath = MUSIC_FULL_PATH_DEFAULT,
-                    ReminderTimeInMinutes = AppConstants.REMINDER_INTERVAL_MINIMUM
-                };
+                await this.SavePreferencesAsync();
             }
-
-            this.reminderSettings = new ReminderSettings()
-            {
-                MusicFilePath = MUSIC_FULL_PATH_DEFAULT,
-                ReminderTimeInMinutes = AppConstants.REMINDER_INTERVAL_MINIMUM
-            };
-        }
-
-        private bool IsDefaultSettingsCurrent()
-        {
-            return this.defaultReminderSettings != null &&
-                this.reminderSettings != null &&
-                this.defaultReminderSettings.ReminderTimeInMinutes == this.reminderSettings.ReminderTimeInMinutes &&
-                this.defaultReminderSettings.MusicFilePath == this.reminderSettings.MusicFilePath;
-        }
-
-        private async void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            await this.PlayReminderMusicAsync().ConfigureAwait(false);
-        }
-
-        private async Task PlayReminderMusicAsync()
-        {
-            await Task.Run(() =>
-            {
-                using (var soundPlayer = new SoundPlayer(this.reminderSettings.MusicFilePath))
-                {
-                    soundPlayer.Play(); // can also use soundPlayer.PlaySync()
-                }
-            });
-        }
-
-        private void intervalSettingsUpDownControl_ValueChanged(object sender, EventArgs e)
-        {
-            this.reminderSettings.ReminderTimeInMinutes = (ushort)intervalSettingsUpDownControl.Value;
-            SavePreferences();
-            SetUIWithSettings();
         }
 
         private void mainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            this.SavePreferences();
-            this.disposeResources();
-        }
-
-        private void disposeResources()
-        {
-            try
-            {
-                reminderTriggerTimer1.Stop();
-                reminderTriggerTimer1.Dispose();
-            }
-            catch { }
-        }
-
-        private void resetDefaultSettingsLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-
+            this.reminderLogic.Dispose();
         }
 
         private async void playMusicButton_Click(object sender, EventArgs e)
         {
-            await this.PlayReminderMusicAsync().ConfigureAwait(false);
+            await this.reminderLogic.PlayReminderMusicAsync();
         }
 
         private async void changeMusicButton_Click(object sender, EventArgs e)
         {
             musicFileOpenDialog.Filter = "Wav files|*.WAV";
-            musicFileOpenDialog.InitialDirectory = this.reminderSettings.MusicFilePath;
+            musicFileOpenDialog.InitialDirectory = this.reminderLogic.LoadSettings().MusicLocation;
             var musicFileOpenDialogResult = musicFileOpenDialog.ShowDialog();
             if (musicFileOpenDialogResult == DialogResult.OK)
             {
-                this.reminderSettings.MusicFilePath = musicFileOpenDialog.FileName;
-                this.SetUIWithSettings();
-                this.SavePreferences();
-                await this.PlayReminderMusicAsync().ConfigureAwait(false);
+                this.musicLocation = musicFileOpenDialog.FileName;
+                await this.SavePreferencesAsync();
             }
         }
 
-        private void resetAllSettingsButton_Click(object sender, EventArgs e)
+        private async void resetAllSettingsButton_Click(object sender, EventArgs e)
         {
             if (MessageBox.Show(
-                $"Reminder music will be played once on every {AppConstants.REMINDER_INTERVAL_MINIMUM} minutes.",
+                $"Reminder music will be played once on every {AppConstants.REMINDER_INTERVAL_DEFAULT} minutes.",
                 "Confirm reset",
                 MessageBoxButtons.OKCancel,
                 MessageBoxIcon.Warning) == DialogResult.OK)
             {
-                this.LoadDefaultSettings();
-                this.SavePreferences();
-                this.SetUIWithSettings();
+                await this.reminderLogic.ResetToDefaultSettingsAsync();
             }
         }
 
@@ -257,6 +161,44 @@ namespace WorkBreakReminder
             this.WindowState = FormWindowState.Normal;
             this.ShowInTaskbar = true;
             systemTrayIcon.Visible = false;
+        }
+
+        public void UpdateUIWithReminderSettings(IReminderSettingsReadOnly reminderSettings)
+        {
+            this.SetUIWithSettings(reminderSettings);
+        }
+
+        public void BeforeInitViewCallback()
+        {
+            this.viewInitialized = false;
+        }
+
+        public void AfterInitViewCallback()
+        {
+            this.viewInitialized = true;
+        }
+
+        public void SetNextReminderTime(string summary)
+        {
+            if (summary != null)
+            {
+                if (this.InvokeRequired)
+                {
+                    this.BeginInvoke(new UpdateSummaryDelegate(UpdateReminderSummary), summary);
+                }
+                else
+                {
+                    UpdateReminderSummary(summary);
+                }
+            }
+        }
+
+        private void UpdateReminderSummary(string reminderSummary)
+        {
+            if (reminderSummary != null)
+            {
+                this.reminderInfoLabel.Text = reminderSummary;
+            }
         }
     }
 }

@@ -3,9 +3,9 @@ using System.IO;
 using System.Text.Json;
 using WorkBreakReminder.Core.Model;
 
-namespace WorkBreakReminder.Core
+namespace WorkBreakReminder.Core.Storage.Extensions
 {
-    public class UserProfileFileStorage : IReminderStorage<ReminderSettings, string>
+    public class UserProfileFileStorage<TUserProfileData> : IReminderStorage<TUserProfileData, string>
     {
         private readonly string profileFolderPath;
 
@@ -14,18 +14,18 @@ namespace WorkBreakReminder.Core
             this.profileFolderPath = GetUserProfileFolder();
         }
 
-        public ReminderSettings Get(string fileName)
+        public TUserProfileData Get(string fileName)
         {
             var fileFullPath = Path.Combine(this.profileFolderPath, fileName);
             if (File.Exists(fileFullPath))
             {
-                return JsonSerializer.Deserialize<ReminderSettings>(File.ReadAllText(fileFullPath));
+                return JsonSerializer.Deserialize<TUserProfileData>(File.ReadAllText(fileFullPath));
             }
 
-            return null;
+            return default(TUserProfileData);
         }
 
-        public void Save(ReminderSettings data, string fileName)
+        public void Save(TUserProfileData data, string fileName)
         {
             var pathToWrite = Path.Combine(this.profileFolderPath, fileName);
             var directoryPath = Path.GetDirectoryName(pathToWrite);
@@ -34,6 +34,15 @@ namespace WorkBreakReminder.Core
                 Directory.CreateDirectory(directoryPath);
             }
             File.WriteAllText(pathToWrite, JsonSerializer.Serialize(data));
+        }
+
+        public IStorageValidationResult Validate(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return new StorageValidationResult(false, new string[] { "Invalid file name" });
+
+            var pathToWrite = Path.Combine(this.profileFolderPath, fileName);
+            return File.Exists(pathToWrite) ? StorageValidationResult.Success : new StorageValidationResult(false, new string[] { "File does not exists." });
         }
 
         private string GetUserProfileFolder()

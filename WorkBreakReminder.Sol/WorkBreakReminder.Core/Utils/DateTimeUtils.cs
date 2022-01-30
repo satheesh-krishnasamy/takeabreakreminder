@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WorkBreakReminder.Core.Constants;
 
 namespace WorkBreakReminder.Core.Utils
 {
-    public class DateTimeUtils
+    public static class DateTimeUtils
     {
         public static DateTime GetNextReminderDateTime(ushort reminderTimeInMinutes)
         {
@@ -23,7 +19,7 @@ namespace WorkBreakReminder.Core.Utils
             }
             else
             {
-                reminderDateTime = DateTime.Now.AddMinutes(AppConstants.REMINDER_INTERVAL_MINIMUM);
+                reminderDateTime = DateTime.Now.AddMinutes(AppConstants.REMINDER_INTERVAL_DEFAULT);
             }
 
             return reminderDateTime

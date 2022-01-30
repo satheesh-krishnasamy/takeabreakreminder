@@ -20,7 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WorkBreakReminder.Core\WorkBreakReminder.Core.csproj" />
+    <ProjectReference Include="..\..\WorkBreakReminder.Core.Storage.File\WorkBreakReminder.Core.Storage.Extensions.csproj" />
+    <ProjectReference Include="..\..\WorkBreakReminder.Core\WorkBreakReminder.Core.csproj" />
   </ItemGroup>
 
 </Project>
