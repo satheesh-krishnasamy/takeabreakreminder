@@ -2,9 +2,20 @@
 
 namespace WorkBreakReminder.Core.Model
 {
+    /// <summary>
+    /// Storage validation result.
+    /// </summary>
     public interface IStorageValidationResult
     {
+        /// <summary>
+        /// Error in the storage path given.
+        /// </summary>
         IEnumerable<string> Errors { get; }
+
+        /// <summary>
+        /// Validation status.
+        /// true - if the storage path exists; false - otherwise.
+        /// </summary>
         bool IsValid { get; }
     }
 
@@ -12,15 +23,15 @@ namespace WorkBreakReminder.Core.Model
     {
         public static readonly StorageValidationResult Success = new StorageValidationResult(true);
 
-        public StorageValidationResult(bool validFile)
+        public StorageValidationResult(bool isValidStoragePath)
         {
-            this.IsValid = validFile;
+            this.IsValid = isValidStoragePath;
             Errors = new List<string>();
         }
 
-        public StorageValidationResult(bool validFile, IEnumerable<string> errors)
+        public StorageValidationResult(bool isValidStoragePath, IEnumerable<string> errors)
         {
-            this.IsValid = validFile;
+            this.IsValid = isValidStoragePath;
             if (errors != null)
                 Errors = errors;
             else

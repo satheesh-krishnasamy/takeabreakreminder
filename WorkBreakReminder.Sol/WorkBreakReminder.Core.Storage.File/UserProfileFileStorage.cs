@@ -1,31 +1,41 @@
 ﻿using System;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using WorkBreakReminder.Core.Model;
 
 namespace WorkBreakReminder.Core.Storage.Extensions
 {
+    /// <summary>
+    /// Class implements the IReminderStorage using the user's default directory as target location.
+    /// </summary>
+    /// <typeparam name="TUserProfileData">Class instance represents the data to be persisted into the storage.</typeparam>
     public class UserProfileFileStorage<TUserProfileData> : IReminderStorage<TUserProfileData, string>
     {
         private readonly string profileFolderPath;
 
+        /// <summary>
+        /// Initialized the <see cref="UserProfileFileStorage"/> using 
+        /// the current user directory in local disk as target location.
+        /// </summary>
         public UserProfileFileStorage()
         {
             this.profileFolderPath = GetUserProfileFolder();
         }
 
-        public TUserProfileData Get(string fileName)
+
+        public async Task<TUserProfileData> GetAsync(string fileName)
         {
             var fileFullPath = Path.Combine(this.profileFolderPath, fileName);
             if (File.Exists(fileFullPath))
             {
-                return JsonSerializer.Deserialize<TUserProfileData>(File.ReadAllText(fileFullPath));
+                return JsonSerializer.Deserialize<TUserProfileData>(await File.ReadAllTextAsync(fileFullPath));
             }
 
             return default(TUserProfileData);
         }
 
-        public void Save(TUserProfileData data, string fileName)
+        public async Task<bool> SaveAsync(TUserProfileData data, string fileName)
         {
             var pathToWrite = Path.Combine(this.profileFolderPath, fileName);
             var directoryPath = Path.GetDirectoryName(pathToWrite);
@@ -33,7 +43,8 @@ namespace WorkBreakReminder.Core.Storage.Extensions
             {
                 Directory.CreateDirectory(directoryPath);
             }
-            File.WriteAllText(pathToWrite, JsonSerializer.Serialize(data));
+            await File.WriteAllTextAsync(pathToWrite, JsonSerializer.Serialize(data));
+            return true;
         }
 
         public IStorageValidationResult Validate(string fileName)

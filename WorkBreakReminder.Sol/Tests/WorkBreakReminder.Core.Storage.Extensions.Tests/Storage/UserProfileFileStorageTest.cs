@@ -9,7 +9,7 @@ namespace WorkBreakReminder.Core.Storage.Extensions.Tests
     public class UserProfileFileStorageTest
     {
         [Fact]
-        public void Data_Should_Be_Stored_And_Retrieved_Succesfully()
+        public async void Data_Should_Be_Stored_And_Retrieved_Succesfully()
         {
             var fileName = Path.Combine("test", "test.json");
 
@@ -17,16 +17,20 @@ namespace WorkBreakReminder.Core.Storage.Extensions.Tests
             var dataToStore = new ReminderSettings()
             {
                 MusicLocation = Path.Combine("SomePath", DateTime.UtcNow.Millisecond.ToString(), ".file"),
-                ReminderIntervalInMinutes = (ushort)(new Random().Next(10, 60))
+                ReminderIntervalInMinutes = (ushort)(new Random().Next(10, 60)),
+                MinimizeOnCloseWindow = true,
+                PopupWindowOnEachReminder = true
             };
 
-            storage.Save(dataToStore, fileName);
+            await storage.SaveAsync(dataToStore, fileName);
 
-            var dataReadFromStorage = storage.Get(fileName);
+            var dataReadFromStorage = await storage.GetAsync(fileName);
 
             Assert.NotNull(dataReadFromStorage);
             Assert.Equal(dataToStore.MusicLocation, dataReadFromStorage.MusicLocation);
             Assert.Equal(dataToStore.ReminderIntervalInMinutes, dataReadFromStorage.ReminderIntervalInMinutes);
+            Assert.Equal(dataToStore.MinimizeOnCloseWindow, dataReadFromStorage.MinimizeOnCloseWindow);
+            Assert.Equal(dataToStore.PopupWindowOnEachReminder, dataReadFromStorage.PopupWindowOnEachReminder);
         }
     }
 }

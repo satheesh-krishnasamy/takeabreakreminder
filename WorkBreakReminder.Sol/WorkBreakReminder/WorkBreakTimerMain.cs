@@ -16,9 +16,10 @@ namespace WorkBreakReminder
     public partial class mainForm : Form, IReminderView
     {
         private readonly IReminderStorage<ReminderSettings, string> storage;
-        private readonly ReminderLogic reminderLogic;
+        private readonly IReminderLogic reminderLogic;
         private string musicLocation;
         private bool viewInitialized;
+        private bool userForcedClose;
 
         public mainForm(IConfiguration appConfiguration)
         {
@@ -26,11 +27,55 @@ namespace WorkBreakReminder
             var appSettings = appConfiguration.GetSection("appSettings").Get<AppSettings>();
             this.storage = new UserProfileFileStorage<ReminderSettings>();
             this.reminderLogic = new ReminderLogic(this, this.storage, new AppSettingsReadonly(appSettings));
-            this.reminderLogic.Initialize();
+            this.reminderLogic.InitializeAsync();
         }
 
         private delegate void UpdateControlsDelegate(IReminderSettingsReadOnly args);
         private delegate void UpdateSummaryDelegate(string args);
+        private delegate void ExecuteMethod();
+
+
+        public void UpdateUIWithReminderSettings(IReminderSettingsReadOnly reminderSettings)
+        {
+            this.SetUIWithSettings(reminderSettings);
+        }
+
+        public void BeforeInitViewCallback()
+        {
+            this.viewInitialized = false;
+        }
+
+        public void AfterInitViewCallback()
+        {
+            this.viewInitialized = true;
+        }
+
+        public void OnReminder()
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new ExecuteMethod(showAndThenMinimizeWindow));
+            }
+            else
+            {
+                this.showAndThenMinimizeWindow();
+            }
+        }
+
+        public void SetNextReminderTime(string summary)
+        {
+            if (summary != null)
+            {
+                if (this.InvokeRequired)
+                {
+                    this.BeginInvoke(new UpdateSummaryDelegate(UpdateReminderSummary), summary);
+                }
+                else
+                {
+                    UpdateReminderSummary(summary);
+                }
+            }
+        }
 
         private void SetUIWithSettings(IReminderSettingsReadOnly reminderSettings)
         {
@@ -51,21 +96,28 @@ namespace WorkBreakReminder
                 var reminderSettings = args;// args[0] as IReminderSettingsReadOnly;
                 if (reminderSettings != null)
                 {
-                    intervalSettingsUpDownControl.Value = reminderSettings.ReminderIntervalInMinutes;
+                    this.intervalSettingsUpDownControl.Value = reminderSettings.ReminderIntervalInMinutes;
                     this.musicLocation = reminderSettings.MusicLocation;
+                    this.chkBoxPopupOnReminder.Checked = reminderSettings.PopupWindowOnEachReminder;
+                    this.chkBoxClosePreference.Checked = reminderSettings.MinimizeOnCloseWindow;
                 }
             }
         }
 
-        private async void DoMinimizeWindowAsync()
+        private async void showAndThenMinimizeWindow()
         {
             if (this.WindowState == FormWindowState.Minimized)
             {
                 ShowAppInNormalWindowSize();
                 await Task.Delay(1000);
-                this.WindowState = FormWindowState.Minimized;
-                this.Hide();
+                MinimizeWindow();
             }
+        }
+
+        private void MinimizeWindow()
+        {
+            this.WindowState = FormWindowState.Minimized;
+            this.Hide();
         }
 
         private async Task SavePreferencesAsync()
@@ -73,8 +125,12 @@ namespace WorkBreakReminder
             try
             {
                 await this.reminderLogic.SaveSettingsAsync(
-                    new ReminderSettings(this.musicLocation, decimal.ToUInt16(intervalSettingsUpDownControl.Value)))
-                    ;
+                    new ReminderSettings(
+                        this.musicLocation,
+                        decimal.ToUInt16(intervalSettingsUpDownControl.Value),
+                        this.chkBoxClosePreference.Checked,
+                        this.chkBoxPopupOnReminder.Checked
+                    ));
             }
             catch (Exception exp)
             {
@@ -102,9 +158,18 @@ namespace WorkBreakReminder
             }
         }
 
-        private void mainForm_FormClosing(object sender, FormClosingEventArgs e)
+        private async void mainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            this.reminderLogic.Dispose();
+            if (chkBoxClosePreference.Checked && !this.userForcedClose)
+            {
+                MinimizeWindow();
+                e.Cancel = true;
+            }
+            else
+            {
+                await this.SavePreferencesAsync();
+                this.reminderLogic.Dispose();
+            }
         }
 
         private async void playMusicButton_Click(object sender, EventArgs e)
@@ -114,8 +179,10 @@ namespace WorkBreakReminder
 
         private async void changeMusicButton_Click(object sender, EventArgs e)
         {
+            // Filter only wav audio files
             musicFileOpenDialog.Filter = "Wav files|*.WAV";
-            musicFileOpenDialog.InitialDirectory = this.reminderLogic.LoadSettings().MusicLocation;
+            // Set the music
+            musicFileOpenDialog.InitialDirectory = (await this.reminderLogic.GetCurrentSettingsAsync()).MusicLocation;
             var musicFileOpenDialogResult = musicFileOpenDialog.ShowDialog();
             if (musicFileOpenDialogResult == DialogResult.OK)
             {
@@ -140,14 +207,14 @@ namespace WorkBreakReminder
         {
             if (FormWindowState.Minimized == this.WindowState)
             {
-                systemTrayIcon.Visible = true;
-                systemTrayIcon.ShowBalloonTip(3000);
+                showNextReminderInBaloonNotification();
                 this.Hide();
             }
-            else if (FormWindowState.Normal == this.WindowState)
-            {
-                systemTrayIcon.Visible = false;
-            }
+        }
+
+        private void showNextReminderInBaloonNotification()
+        {
+            systemTrayIcon.ShowBalloonTip(500, this.Text, this.reminderInfoLabel.Text, ToolTipIcon.Info);
         }
 
         private void systemTrayIcon_Click(object sender, EventArgs e)
@@ -160,37 +227,8 @@ namespace WorkBreakReminder
             this.Show();
             this.WindowState = FormWindowState.Normal;
             this.ShowInTaskbar = true;
-            systemTrayIcon.Visible = false;
-        }
-
-        public void UpdateUIWithReminderSettings(IReminderSettingsReadOnly reminderSettings)
-        {
-            this.SetUIWithSettings(reminderSettings);
-        }
-
-        public void BeforeInitViewCallback()
-        {
-            this.viewInitialized = false;
-        }
-
-        public void AfterInitViewCallback()
-        {
-            this.viewInitialized = true;
-        }
-
-        public void SetNextReminderTime(string summary)
-        {
-            if (summary != null)
-            {
-                if (this.InvokeRequired)
-                {
-                    this.BeginInvoke(new UpdateSummaryDelegate(UpdateReminderSummary), summary);
-                }
-                else
-                {
-                    UpdateReminderSummary(summary);
-                }
-            }
+            // Let the system tray icon visible as the menu options are needed to close the window.
+            // systemTrayIcon.Visible = false;
         }
 
         private void UpdateReminderSummary(string reminderSummary)
@@ -198,7 +236,32 @@ namespace WorkBreakReminder
             if (reminderSummary != null)
             {
                 this.reminderInfoLabel.Text = reminderSummary;
+
+                if (this.WindowState == FormWindowState.Minimized)
+                {
+                    this.showNextReminderInBaloonNotification();
+                }
             }
         }
+
+        private async void chkBoxClosePreference_CheckedChanged(object sender, EventArgs e)
+        {
+            await this.SavePreferencesAsync();
+        }
+
+        private void systemTrayMenuStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+            // Close the app when used asked to.
+            // This method will be called if any of the menu item in the
+            // system tray context menu is clicked. The value for the property
+            // "Tag" might be null if any new menu item is added without the tag value.
+            if (e.ClickedItem.Tag == "Exit")
+            {
+                this.userForcedClose = true;
+                this.Close();
+            }
+
+        }
+
     }
 }

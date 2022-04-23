@@ -32,103 +32,6 @@ namespace WorkBreakReminder.Core.Logic
             this.reminderTriggerTimer = new Timer(OnTimerTimeElapsedEventAsync, null, int.MaxValue, Timeout.Infinite);
         }
 
-        public DateTime GetNextReminderTime()
-        {
-            return DateTimeUtils.GetNextReminderDateTime(this.reminderSettings.ReminderIntervalInMinutes);
-        }
-
-        public IReminderSettingsReadOnly LoadSettings()
-        {
-            try
-            {
-                if (reminderSettings != null)
-                {
-                    return reminderSettings;
-                }
-
-                reminderSettings = this.reminderStorage.Get(reminderConfiguration.Storage.PreferencesFileLocation);
-                if (!this.ValidateUserPreferences(reminderSettings))
-                {
-                    reminderSettings = this.GetDefaultSettingsInternal();
-                }
-
-                return reminderSettings;
-            }
-            catch
-            {
-                reminderSettings = this.GetDefaultSettingsInternal();
-                return reminderSettings;
-            }
-        }
-
-        public async Task<ISaveSettingsResult> SaveSettingsAsync(IReminderSettingsReadOnly settingsToSave)
-        {
-            try
-            {
-                StringBuilder errors = new StringBuilder();
-                bool timerIntervalChanged = settingsToSave.ReminderIntervalInMinutes > 0
-                    && this.reminderSettings.ReminderIntervalInMinutes != settingsToSave.ReminderIntervalInMinutes;
-                if (timerIntervalChanged)
-                {
-                    this.reminderSettings.ReminderIntervalInMinutes = settingsToSave.ReminderIntervalInMinutes;
-                }
-                else if (settingsToSave.ReminderIntervalInMinutes < 1)
-                {
-                    errors.AppendLine("Reminder interval in minutes is invalid.");
-                }
-
-                var musicLocationChanged = this.reminderSettings.MusicLocation != settingsToSave.MusicLocation;
-                if (musicLocationChanged)
-                {
-                    var musicLocationValidationResult = this.reminderStorage.Validate(settingsToSave.MusicLocation);
-                    if (musicLocationValidationResult.IsValid)
-                    {
-                        this.reminderSettings.MusicLocation = settingsToSave.MusicLocation;
-                    }
-                    else
-                    {
-                        musicLocationChanged = false;
-                        errors.AppendLine("Selected music location is invalid.");
-                    }
-                }
-
-                if (musicLocationChanged || timerIntervalChanged)
-                {
-                    this.reminderStorage.Save(this.reminderSettings, this.reminderConfiguration.Storage.PreferencesFileLocation);
-
-                    if (musicLocationChanged && timerIntervalChanged)
-                    {
-                        this.ResetTimerAndUpdateUI();
-                    }
-                    else if (timerIntervalChanged)
-                    {
-                        this.ResetTimerTimeout();
-                        this.reminderView.BeforeInitViewCallback();
-                        this.SetReminderSummary();
-                        this.reminderView.AfterInitViewCallback();
-                    }
-                    else
-                    {
-                        await this.PlayReminderMusicAsync().ConfigureAwait(false);
-                    }
-
-                    return SaveSettingsResult.Success;
-                }
-
-                return new SaveSettingsResult(false, new Exception(errors.ToString()));
-            }
-            catch (Exception exp)
-            {
-                return new SaveSettingsResult(false, exp);
-            }
-        }
-
-        public bool Initialize()
-        {
-            this.LoadSettings();
-            this.ResetTimerAndUpdateUI();
-            return true;
-        }
 
         private void ResetTimerAndUpdateUI()
         {
@@ -161,19 +64,8 @@ namespace WorkBreakReminder.Core.Logic
         private async void OnTimerTimeElapsedEventAsync(object? state)
         {
             await this.PlayReminderMusicAsync().ConfigureAwait(false);
-
             this.ResetTimerAndUpdateUI();
-        }
-
-        public async Task PlayReminderMusicAsync()
-        {
-            await Task.Run(() =>
-            {
-                using (var soundPlayer = new SoundPlayer(this.reminderSettings.MusicLocation))
-                {
-                    soundPlayer.Play(); // can also use soundPlayer.PlaySync()
-                }
-            });
+            this.reminderView.OnReminder();
         }
 
         private bool ValidateUserPreferences(ReminderSettings userPreferences)
@@ -183,6 +75,50 @@ namespace WorkBreakReminder.Core.Logic
                 || !reminderStorage.Validate(userPreferences.MusicLocation).IsValid
                 || userPreferences.ReminderIntervalInMinutes < AppConstants.REMINDER_INTERVAL_MINIMUM
                 || userPreferences.ReminderIntervalInMinutes > AppConstants.REMINDER_INTERVAL_MAXMUM);
+        }
+
+        private ReminderSettings GetDefaultSettingsInternal()
+        {
+            return new ReminderSettings()
+            {
+                MusicLocation = this.reminderConfiguration.Default.MusicLocation,
+                ReminderIntervalInMinutes = this.reminderConfiguration.Default.ReminderIntervalInMinutes,
+                MinimizeOnCloseWindow = this.reminderConfiguration.Default.MinimizeOnCloseWindow,
+                PopupWindowOnEachReminder = this.reminderConfiguration.Default.PopupWindowOnEachReminder
+            };
+        }
+
+        private async Task<IReminderSettingsReadOnly> loadSettingsAsync()
+        {
+            try
+            {
+                if (reminderSettings != null)
+                {
+                    return reminderSettings;
+                }
+
+                // Get the reminder settings from storage
+                reminderSettings = await this.reminderStorage.GetAsync(reminderConfiguration.Storage.PreferencesFileLocation);
+
+                // Validate the settings.
+                if (!this.ValidateUserPreferences(reminderSettings))
+                {
+                    reminderSettings = this.GetDefaultSettingsInternal();
+                }
+
+                return reminderSettings;
+            }
+            catch
+            {
+                // Load the default settings value in case of unresolvable error.
+                reminderSettings = this.GetDefaultSettingsInternal();
+                return reminderSettings;
+            }
+        }
+
+        public async Task<IReminderSettingsReadOnly> GetCurrentSettingsAsync()
+        {
+            return await this.loadSettingsAsync();
         }
 
         public async Task<bool> ResetToDefaultSettingsAsync()
@@ -200,26 +136,112 @@ namespace WorkBreakReminder.Core.Logic
             }
         }
 
-        private ReminderSettings GetDefaultSettingsInternal()
+
+        public async Task PlayReminderMusicAsync()
         {
-            return new ReminderSettings()
+            await Task.Run(() =>
             {
-                MusicLocation = this.reminderConfiguration.Default.MusicLocation,
-                ReminderIntervalInMinutes = this.reminderConfiguration.Default.ReminderIntervalInMinutes
-            };
+                using (var soundPlayer = new SoundPlayer(this.reminderSettings.MusicLocation))
+                {
+                    soundPlayer.Play(); // can also use soundPlayer.PlaySync()
+                }
+            });
         }
 
-        public void Dispose()
+
+        public DateTime GetNextReminderTime()
+        {
+            return DateTimeUtils.GetNextReminderDateTime(this.reminderSettings.ReminderIntervalInMinutes);
+        }
+
+        /// <summary>
+        /// Saves the application settings.
+        /// </summary>
+        /// <param name="settingsToSave">Settings object to be saved.</param>
+        /// <returns>Task representing the Save operation.</returns>
+        public async Task<ISaveSettingsResult> SaveSettingsAsync(IReminderSettingsReadOnly settingsToSave)
         {
             try
             {
-                this.SaveSettingsAsync(this.reminderSettings);
+                StringBuilder errors = new StringBuilder();
+                bool shouldSaveTimerInterval = settingsToSave.ReminderIntervalInMinutes > 0
+                    && this.reminderSettings.ReminderIntervalInMinutes != settingsToSave.ReminderIntervalInMinutes;
+
+                if (shouldSaveTimerInterval)
+                {
+                    this.reminderSettings.ReminderIntervalInMinutes = settingsToSave.ReminderIntervalInMinutes;
+                }
+                else if (settingsToSave.ReminderIntervalInMinutes < 1)
+                {
+                    errors.AppendLine("Reminder interval in minutes is invalid.");
+                }
+
+                // Save the following 2 preferences all the time.
+                // For other options that do not require resetting the reminder timer or ui, 
+                // Just save the changes.
+                this.reminderSettings.PopupWindowOnEachReminder = settingsToSave.PopupWindowOnEachReminder;
+                this.reminderSettings.MinimizeOnCloseWindow = settingsToSave.MinimizeOnCloseWindow;
+
+                var shouldSaveMusicLocation = this.reminderSettings.MusicLocation != settingsToSave.MusicLocation;
+                if (shouldSaveMusicLocation)
+                {
+                    var musicLocationValidationResult = this.reminderStorage.Validate(settingsToSave.MusicLocation);
+                    if (musicLocationValidationResult.IsValid)
+                    {
+                        this.reminderSettings.MusicLocation = settingsToSave.MusicLocation;
+                    }
+                    else
+                    {
+                        shouldSaveMusicLocation = false;
+                        errors.AppendLine("Selected music location is invalid.");
+                    }
+                }
+
+                await this.reminderStorage.SaveAsync(this.reminderSettings, this.reminderConfiguration.Storage.PreferencesFileLocation);
+
+                if (shouldSaveMusicLocation && shouldSaveTimerInterval)
+                {
+                    this.ResetTimerAndUpdateUI();
+                }
+                else if (shouldSaveTimerInterval)
+                {
+                    this.ResetTimerTimeout();
+                    this.reminderView.BeforeInitViewCallback();
+                    this.SetReminderSummary();
+                    this.reminderView.AfterInitViewCallback();
+                }
+                else if (shouldSaveMusicLocation)
+                {
+                    await this.PlayReminderMusicAsync().ConfigureAwait(false);
+                }
+
+                if (errors.Length > 0)
+                    return new SaveSettingsResult(false, new Exception(errors.ToString()));
+
+                return SaveSettingsResult.Success;
             }
-            catch
+            catch (Exception exp)
             {
-
+                return new SaveSettingsResult(false, exp);
             }
+        }
 
+        /// <summary>
+        /// Method to initialize the view and other master data.
+        /// </summary>
+        /// <returns>True if initialized correctly; false - otherwise.</returns>
+        public async Task<bool> InitializeAsync()
+        {
+            await this.loadSettingsAsync();
+            this.ResetTimerAndUpdateUI();
+            return true;
+        }
+
+        /// <summary>
+        /// Disposes the applicable internal unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
             if (this.reminderTriggerTimer != null)
             {
                 try
@@ -229,7 +251,7 @@ namespace WorkBreakReminder.Core.Logic
                 }
                 catch
                 {
-
+                    // cannot do anything; just exit.
                 }
             }
         }

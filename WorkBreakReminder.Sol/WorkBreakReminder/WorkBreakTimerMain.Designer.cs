@@ -44,19 +44,29 @@ namespace WorkBreakReminder
             this.detailsGroupBox = new System.Windows.Forms.GroupBox();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.reminderInfoLabel = new System.Windows.Forms.Label();
+            this.tabPageOptions = new System.Windows.Forms.TabPage();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.chkBoxPopupOnReminder = new System.Windows.Forms.CheckBox();
+            this.chkBoxClosePreference = new System.Windows.Forms.CheckBox();
             this.musicFileOpenDialog = new System.Windows.Forms.OpenFileDialog();
             this.systemTrayIcon = new System.Windows.Forms.NotifyIcon(this.components);
+            this.systemTrayMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.exitReminderApp = new System.Windows.Forms.ToolStripMenuItem();
             this.tabControl.SuspendLayout();
             this.tabSettings.SuspendLayout();
             this.settingsGroupbox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.intervalSettingsUpDownControl)).BeginInit();
             this.detailsGroupBox.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
+            this.tabPageOptions.SuspendLayout();
+            this.groupBox1.SuspendLayout();
+            this.systemTrayMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl
             // 
             this.tabControl.Controls.Add(this.tabSettings);
+            this.tabControl.Controls.Add(this.tabPageOptions);
             this.tabControl.Location = new System.Drawing.Point(1, 5);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
@@ -73,6 +83,7 @@ namespace WorkBreakReminder
             this.tabSettings.Size = new System.Drawing.Size(516, 355);
             this.tabSettings.TabIndex = 0;
             this.tabSettings.Text = "Reminder";
+            this.tabSettings.ToolTipText = "Main reminder page";
             this.tabSettings.UseVisualStyleBackColor = true;
             // 
             // settingsGroupbox
@@ -205,15 +216,77 @@ namespace WorkBreakReminder
             this.reminderInfoLabel.TabIndex = 8;
             this.reminderInfoLabel.Text = "Next reminder details will be shown here.";
             // 
+            // tabPageOptions
+            // 
+            this.tabPageOptions.Controls.Add(this.groupBox1);
+            this.tabPageOptions.Location = new System.Drawing.Point(4, 37);
+            this.tabPageOptions.Name = "tabPageOptions";
+            this.tabPageOptions.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageOptions.Size = new System.Drawing.Size(516, 355);
+            this.tabPageOptions.TabIndex = 1;
+            this.tabPageOptions.Text = "Options";
+            this.tabPageOptions.ToolTipText = "Options page";
+            this.tabPageOptions.UseVisualStyleBackColor = true;
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.chkBoxPopupOnReminder);
+            this.groupBox1.Controls.Add(this.chkBoxClosePreference);
+            this.groupBox1.Location = new System.Drawing.Point(7, 3);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(505, 130);
+            this.groupBox1.TabIndex = 0;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Additional options";
+            // 
+            // chkBoxPopupOnReminder
+            // 
+            this.chkBoxPopupOnReminder.AutoSize = true;
+            this.chkBoxPopupOnReminder.Location = new System.Drawing.Point(7, 73);
+            this.chkBoxPopupOnReminder.Name = "chkBoxPopupOnReminder";
+            this.chkBoxPopupOnReminder.Size = new System.Drawing.Size(321, 32);
+            this.chkBoxPopupOnReminder.TabIndex = 1;
+            this.chkBoxPopupOnReminder.Text = "&Popup window on each reminder";
+            this.chkBoxPopupOnReminder.UseVisualStyleBackColor = true;
+            // 
+            // chkBoxClosePreference
+            // 
+            this.chkBoxClosePreference.AutoSize = true;
+            this.chkBoxClosePreference.Location = new System.Drawing.Point(7, 34);
+            this.chkBoxClosePreference.Name = "chkBoxClosePreference";
+            this.chkBoxClosePreference.Size = new System.Drawing.Size(287, 32);
+            this.chkBoxClosePreference.TabIndex = 0;
+            this.chkBoxClosePreference.Text = "&Minimize window upon close";
+            this.chkBoxClosePreference.UseVisualStyleBackColor = true;
+            this.chkBoxClosePreference.CheckedChanged += new System.EventHandler(this.chkBoxClosePreference_CheckedChanged);
+            // 
             // systemTrayIcon
             // 
             this.systemTrayIcon.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Info;
             this.systemTrayIcon.BalloonTipText = "Show take a break app.";
             this.systemTrayIcon.BalloonTipTitle = "Take a break reminder";
+            this.systemTrayIcon.ContextMenuStrip = this.systemTrayMenuStrip;
             this.systemTrayIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("systemTrayIcon.Icon")));
             this.systemTrayIcon.Text = "Take a break reminder";
             this.systemTrayIcon.Visible = true;
             this.systemTrayIcon.Click += new System.EventHandler(this.systemTrayIcon_Click);
+            // 
+            // systemTrayMenuStrip
+            // 
+            this.systemTrayMenuStrip.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.systemTrayMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.exitReminderApp});
+            this.systemTrayMenuStrip.Name = "systemTrayMenuStrip";
+            this.systemTrayMenuStrip.Size = new System.Drawing.Size(116, 36);
+            this.systemTrayMenuStrip.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.systemTrayMenuStrip_ItemClicked);
+            // 
+            // exitReminderApp
+            // 
+            this.exitReminderApp.Name = "exitReminderApp";
+            this.exitReminderApp.Size = new System.Drawing.Size(115, 32);
+            this.exitReminderApp.Tag = "Exit";
+            this.exitReminderApp.Text = "Exit";
+            this.exitReminderApp.ToolTipText = "Exit the reminder app";
             // 
             // mainForm
             // 
@@ -236,6 +309,10 @@ namespace WorkBreakReminder
             this.detailsGroupBox.ResumeLayout(false);
             this.flowLayoutPanel1.ResumeLayout(false);
             this.flowLayoutPanel1.PerformLayout();
+            this.tabPageOptions.ResumeLayout(false);
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            this.systemTrayMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -257,6 +334,12 @@ namespace WorkBreakReminder
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.NotifyIcon systemTrayIcon;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
+        private System.Windows.Forms.TabPage tabPageOptions;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.CheckBox chkBoxClosePreference;
+        private System.Windows.Forms.CheckBox chkBoxPopupOnReminder;
+        private System.Windows.Forms.ContextMenuStrip systemTrayMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem exitReminderApp;
     }
 }
 
