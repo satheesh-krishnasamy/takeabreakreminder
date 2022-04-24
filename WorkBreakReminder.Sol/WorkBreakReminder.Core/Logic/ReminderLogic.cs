@@ -263,6 +263,13 @@ namespace WorkBreakReminder.Core.Logic
             return true;
         }
 
+        public async Task<bool> CancelDNDAsync()
+        {
+            this.dndDateTimeTill = DateTime.Now.AddHours(-1);
+            this.ResetTimerAndUpdateUI();
+            return true;
+        }
+
         /// <summary>
         /// Disposes the applicable internal unmanaged resources.
         /// </summary>

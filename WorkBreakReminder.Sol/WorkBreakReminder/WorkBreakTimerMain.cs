@@ -15,6 +15,9 @@ namespace WorkBreakReminder
 {
     public partial class mainForm : Form, IReminderView
     {
+        private const string ReminderAppPaused = "Paused";
+        private const string ReminderAppCanBePaused = "CanBePaused";
+
         private readonly IReminderStorage<ReminderSettings, string> storage;
         private readonly IReminderLogic reminderLogic;
         private string musicLocation;
@@ -32,7 +35,7 @@ namespace WorkBreakReminder
 
         private delegate void UpdateControlsDelegate(IReminderSettingsReadOnly args);
         private delegate void UpdateSummaryDelegate(string args);
-        private delegate void ExecuteMethod();
+        private delegate void ExecuteMethod(NotificationEventArgs args);
 
 
         public void UpdateUIWithReminderSettings(IReminderSettingsReadOnly reminderSettings)
@@ -52,19 +55,15 @@ namespace WorkBreakReminder
 
         public void OnReminder(NotificationEventArgs args)
         {
-            if (args.NotificationPrefernces == UserNotificationPrefernces.FocusWindow)
-            {
-                if (this.InvokeRequired)
-                {
-                    this.BeginInvoke(new ExecuteMethod(showAndThenMinimizeWindow));
-                }
-                else
-                {
-                    this.showAndThenMinimizeWindow();
-                }
-            }
 
-            btnPauseReminder.Visible = true;
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new ExecuteMethod(showAndThenMinimizeWindow), args);
+            }
+            else
+            {
+                this.showAndThenMinimizeWindow(args);
+            }
         }
 
         public void SetNextReminderTime(string summary)
@@ -109,14 +108,19 @@ namespace WorkBreakReminder
             }
         }
 
-        private async void showAndThenMinimizeWindow()
+        private async void showAndThenMinimizeWindow(NotificationEventArgs args)
         {
-            if (this.WindowState == FormWindowState.Minimized)
+            if (args.NotificationPrefernces == UserNotificationPrefernces.FocusWindow)
             {
-                ShowAppInNormalWindowSize();
-                await Task.Delay(1000);
-                MinimizeWindow();
+                if (this.WindowState == FormWindowState.Minimized)
+                {
+                    ShowAppInNormalWindowSize();
+                    await Task.Delay(1000);
+                    MinimizeWindow();
+                }
             }
+
+            SetReminderCanBePaused();
         }
 
         private void MinimizeWindow()
@@ -276,7 +280,33 @@ namespace WorkBreakReminder
 
         private async void button1_Click(object sender, EventArgs e)
         {
-            btnPauseReminder.Visible = !await this.reminderLogic.DoNotDisturbForAnHourAsync();
+            if (btnPauseReminder.Tag == ReminderAppPaused)
+            {
+                if (await this.reminderLogic.CancelDNDAsync())
+                {
+                    SetReminderCanBePaused();
+                }
+            }
+            else
+            {
+                if (await this.reminderLogic.DoNotDisturbForAnHourAsync())
+                {
+                    UpdateUIAsPaused();
+                }
+            }
+
+        }
+
+        private void SetReminderCanBePaused()
+        {
+            btnPauseReminder.Text = "Pause 1 hour";
+            btnPauseReminder.Tag = ReminderAppCanBePaused;
+        }
+
+        private void UpdateUIAsPaused()
+        {
+            btnPauseReminder.Text = "Resume";
+            btnPauseReminder.Tag = ReminderAppPaused;
         }
     }
 }

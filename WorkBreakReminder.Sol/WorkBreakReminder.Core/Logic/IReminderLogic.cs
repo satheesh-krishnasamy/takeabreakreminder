@@ -49,5 +49,11 @@ namespace WorkBreakReminder.Core.Logic
         /// for an hour from now.</remarks>
         /// <returns>true - if the request got processed successfully; false - otherwise.</returns>
         Task<bool> DoNotDisturbForAnHourAsync();
+
+        /// <summary>
+        /// Resumes the reminder functionality that was paused for an hour earlier.
+        /// </summary>
+        /// <returns></returns>
+        Task<bool> CancelDNDAsync();
     }
 }
