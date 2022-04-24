@@ -17,7 +17,7 @@ namespace WorkBreakReminder.Core.Tests.Utils
                 .AddMinutes(DateTime.Now.Minute)
                 .AddMinutes(TEST_VALUE_REMINDER_INTERVAL_IN_MINUTES);
 
-            var reminderDateTime = DateTimeUtils.GetNextReminderDateTime(TEST_VALUE_REMINDER_INTERVAL_IN_MINUTES);
+            var reminderDateTime = DateTimeUtils.GetNextReminderDateTime(TEST_VALUE_REMINDER_INTERVAL_IN_MINUTES, DateTime.Now);
 
             /* The reminder date time will always be <= the expected result.
              * Example if the reminder interval is 10 and the current time is 10:14 AM/PM then

@@ -50,16 +50,21 @@ namespace WorkBreakReminder
             this.viewInitialized = true;
         }
 
-        public void OnReminder()
+        public void OnReminder(NotificationEventArgs args)
         {
-            if (this.InvokeRequired)
+            if (args.NotificationPrefernces == UserNotificationPrefernces.FocusWindow)
             {
-                this.BeginInvoke(new ExecuteMethod(showAndThenMinimizeWindow));
+                if (this.InvokeRequired)
+                {
+                    this.BeginInvoke(new ExecuteMethod(showAndThenMinimizeWindow));
+                }
+                else
+                {
+                    this.showAndThenMinimizeWindow();
+                }
             }
-            else
-            {
-                this.showAndThenMinimizeWindow();
-            }
+
+            btnPauseReminder.Visible = true;
         }
 
         public void SetNextReminderTime(string summary)
@@ -214,6 +219,7 @@ namespace WorkBreakReminder
 
         private void showNextReminderInBaloonNotification()
         {
+            systemTrayIcon.BalloonTipTitle = this.Text;
             systemTrayIcon.ShowBalloonTip(500, this.Text, this.reminderInfoLabel.Text, ToolTipIcon.Info);
         }
 
@@ -263,5 +269,14 @@ namespace WorkBreakReminder
 
         }
 
+        private async void chkBoxPopupOnReminder_CheckedChanged(object sender, EventArgs e)
+        {
+            await this.SavePreferencesAsync();
+        }
+
+        private async void button1_Click(object sender, EventArgs e)
+        {
+            btnPauseReminder.Visible = !await this.reminderLogic.DoNotDisturbForAnHourAsync();
+        }
     }
 }

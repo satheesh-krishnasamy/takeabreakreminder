@@ -16,7 +16,7 @@ namespace WorkBreakReminder.Core.View
         /// <summary>
         /// Method called when the reminder time reached.
         /// </summary>
-        void OnReminder();
+        void OnReminder(NotificationEventArgs args);
 
         /// <summary>
         /// Method called just before calling the update UI method.

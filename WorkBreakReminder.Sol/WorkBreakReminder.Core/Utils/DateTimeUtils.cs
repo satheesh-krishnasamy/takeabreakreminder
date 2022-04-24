@@ -14,12 +14,12 @@ namespace WorkBreakReminder.Core.Utils
         /// </summary>
         /// <param name="reminderTimeInMinutes">Reminder interval in minutes.</param>
         /// <returns>Date time represents the next reminder time.</returns>
-        public static DateTime GetNextReminderDateTime(ushort reminderTimeInMinutes)
+        public static DateTime GetNextReminderDateTime(ushort reminderTimeInMinutes, DateTime fromDateTime)
         {
             DateTime reminderDateTime;
             if (reminderTimeInMinutes > 0)
             {
-                reminderDateTime = DateTime.Now.AddMinutes(reminderTimeInMinutes);
+                reminderDateTime = fromDateTime.AddMinutes(reminderTimeInMinutes);
                 var extraMinutes = reminderDateTime.Minute % reminderTimeInMinutes;
                 if (extraMinutes > 0)
                 {
@@ -28,7 +28,7 @@ namespace WorkBreakReminder.Core.Utils
             }
             else
             {
-                reminderDateTime = DateTime.Now.AddMinutes(AppConstants.REMINDER_INTERVAL_DEFAULT);
+                reminderDateTime = fromDateTime.AddMinutes(AppConstants.REMINDER_INTERVAL_DEFAULT);
             }
 
             return reminderDateTime

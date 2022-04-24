@@ -20,6 +20,7 @@ namespace WorkBreakReminder.Core.Logic
 
         private ReminderSettings reminderSettings;
         private ReminderSettings defaultReminderSettings = null;
+        private DateTime dndDateTimeTill;
 
         public ReminderLogic(
             IReminderView reminderView,
@@ -58,14 +59,27 @@ namespace WorkBreakReminder.Core.Logic
 
         private int CalculateTimerInterval()
         {
-            return (int)((DateTimeUtils.GetNextReminderDateTime(this.reminderSettings.ReminderIntervalInMinutes) - DateTime.Now).TotalMilliseconds);
+            var fromDateTime = DateTime.Now;
+            if(DateTime.Now <= this.dndDateTimeTill)
+            {
+                fromDateTime = this.dndDateTimeTill;
+            }
+
+            return (int)((DateTimeUtils.GetNextReminderDateTime(this.reminderSettings.ReminderIntervalInMinutes, fromDateTime) - DateTime.Now).TotalMilliseconds);
         }
 
         private async void OnTimerTimeElapsedEventAsync(object? state)
         {
             await this.PlayReminderMusicAsync().ConfigureAwait(false);
             this.ResetTimerAndUpdateUI();
-            this.reminderView.OnReminder();
+
+            UserNotificationPrefernces preferences = UserNotificationPrefernces.None;
+            if (this.reminderSettings.PopupWindowOnEachReminder)
+            {
+                preferences = UserNotificationPrefernces.FocusWindow;
+            }
+
+            this.reminderView.OnReminder(new NotificationEventArgs(preferences));
         }
 
         private bool ValidateUserPreferences(ReminderSettings userPreferences)
@@ -151,7 +165,12 @@ namespace WorkBreakReminder.Core.Logic
 
         public DateTime GetNextReminderTime()
         {
-            return DateTimeUtils.GetNextReminderDateTime(this.reminderSettings.ReminderIntervalInMinutes);
+            var fromDateTime = DateTime.Now;
+            if (DateTime.Now <= this.dndDateTimeTill)
+            {
+                fromDateTime = this.dndDateTimeTill;
+            }
+            return DateTimeUtils.GetNextReminderDateTime(this.reminderSettings.ReminderIntervalInMinutes, fromDateTime);
         }
 
         /// <summary>
@@ -233,6 +252,13 @@ namespace WorkBreakReminder.Core.Logic
         public async Task<bool> InitializeAsync()
         {
             await this.loadSettingsAsync();
+            this.ResetTimerAndUpdateUI();
+            return true;
+        }
+
+        public async Task<bool> DoNotDisturbForAnHourAsync()
+        {
+            this.dndDateTimeTill = DateTime.Now.AddHours(1);
             this.ResetTimerAndUpdateUI();
             return true;
         }

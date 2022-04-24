@@ -41,5 +41,13 @@ namespace WorkBreakReminder.Core.Logic
         Task PlayReminderMusicAsync();
 
         Task<IReminderSettingsReadOnly> GetCurrentSettingsAsync();
+
+        /// <summary>
+        /// To ask the reminder app to not to disturb for an hour from now.      
+        /// </summary>
+        /// <remarks>As of now, calling this method will cause the app to not to play the reminder music
+        /// for an hour from now.</remarks>
+        /// <returns>true - if the request got processed successfully; false - otherwise.</returns>
+        Task<bool> DoNotDisturbForAnHourAsync();
     }
 }
