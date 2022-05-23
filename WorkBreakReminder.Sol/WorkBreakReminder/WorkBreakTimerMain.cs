@@ -104,6 +104,7 @@ namespace WorkBreakReminder
                     this.musicLocation = reminderSettings.MusicLocation;
                     this.chkBoxPopupOnReminder.Checked = reminderSettings.PopupWindowOnEachReminder;
                     this.chkBoxClosePreference.Checked = reminderSettings.MinimizeOnCloseWindow;
+                    this.musicLocationLabel.Text = Path.GetFileName(reminderSettings.MusicLocation);
                 }
             }
         }
@@ -278,7 +279,7 @@ namespace WorkBreakReminder
             await this.SavePreferencesAsync();
         }
 
-        private async void button1_Click(object sender, EventArgs e)
+        private async void btnPauseReminder_Click(object sender, EventArgs e)
         {
             if (btnPauseReminder.Tag == ReminderAppPaused)
             {

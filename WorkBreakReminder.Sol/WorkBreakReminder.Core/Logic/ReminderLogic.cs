@@ -60,7 +60,7 @@ namespace WorkBreakReminder.Core.Logic
         private int CalculateTimerInterval()
         {
             var fromDateTime = DateTime.Now;
-            if(DateTime.Now <= this.dndDateTimeTill)
+            if (DateTime.Now <= this.dndDateTimeTill)
             {
                 fromDateTime = this.dndDateTimeTill;
             }
@@ -218,21 +218,24 @@ namespace WorkBreakReminder.Core.Logic
 
                 await this.reminderStorage.SaveAsync(this.reminderSettings, this.reminderConfiguration.Storage.PreferencesFileLocation);
 
-                if (shouldSaveMusicLocation && shouldSaveTimerInterval)
+                if (shouldSaveMusicLocation || shouldSaveTimerInterval)
                 {
                     this.ResetTimerAndUpdateUI();
+
+                    if (shouldSaveMusicLocation)
+                    {
+                        await this.PlayReminderMusicAsync().ConfigureAwait(false);
+                    }
                 }
-                else if (shouldSaveTimerInterval)
-                {
-                    this.ResetTimerTimeout();
-                    this.reminderView.BeforeInitViewCallback();
-                    this.SetReminderSummary();
-                    this.reminderView.AfterInitViewCallback();
-                }
-                else if (shouldSaveMusicLocation)
-                {
-                    await this.PlayReminderMusicAsync().ConfigureAwait(false);
-                }
+
+                //else if (shouldSaveTimerInterval)
+                //{
+                //    this.ResetTimerTimeout();
+                //    this.reminderView.BeforeInitViewCallback();
+                //    this.SetReminderSummary();
+                //    this.reminderView.AfterInitViewCallback();
+                //}
+                
 
                 if (errors.Length > 0)
                     return new SaveSettingsResult(false, new Exception(errors.ToString()));
