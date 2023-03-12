@@ -1,6 +1,8 @@
-﻿namespace WorkBreakReminder.Core.Model
+﻿using System.Collections.Generic;
+
+namespace WorkBreakReminder.Core.Model
 {
-    public class ReminderSettings : IReminderSettingsReadOnly, IReminderSettings
+    public class ReminderSettings : IReminderSettings
     {
         public ReminderSettings() { }
 
@@ -22,5 +24,7 @@
         public bool MinimizeOnCloseWindow { get; set; }
 
         public bool PopupWindowOnEachReminder { get; set; }
+
+        public List<RecentFile> RecentReminderFiles { get; set; } = new List<RecentFile>();
     }
 }

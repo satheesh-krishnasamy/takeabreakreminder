@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WorkBreakReminder.Config;
@@ -104,7 +106,8 @@ namespace WorkBreakReminder
                     this.musicLocation = reminderSettings.MusicLocation;
                     this.chkBoxPopupOnReminder.Checked = reminderSettings.PopupWindowOnEachReminder;
                     this.chkBoxClosePreference.Checked = reminderSettings.MinimizeOnCloseWindow;
-                    this.musicLocationLabel.Text = Path.GetFileName(reminderSettings.MusicLocation);
+                    //this.musicLocationLabel.Text = Path.GetFileName(reminderSettings.MusicLocation);
+                    BindRecentMusicFilesDropdownList(reminderSettings.RecentReminderFiles);
                 }
             }
         }
@@ -141,6 +144,10 @@ namespace WorkBreakReminder
                         this.chkBoxClosePreference.Checked,
                         this.chkBoxPopupOnReminder.Checked
                     ));
+
+                var reminderSettings = await this.reminderLogic.GetCurrentSettingsAsync();
+                BindRecentMusicFilesDropdownList(reminderSettings.RecentReminderFiles);
+
             }
             catch (Exception exp)
             {
@@ -148,6 +155,18 @@ namespace WorkBreakReminder
                 {
                     MessageBox.Show(exp.Message, "Error in saving preferences");
                 }
+            }
+        }
+
+        private void BindRecentMusicFilesDropdownList(List<RecentFile> recentFiles)
+        {
+            if (recentFiles != null && recentFiles.Count > 0)
+            {
+                var items = recentFiles.OrderByDescending(p => p.AccessedOn);
+                pastMusicFilesList.DisplayMember = "FileName";
+                pastMusicFilesList.ValueMember = "FilePath";
+                pastMusicFilesList.DataSource = new BindingSource(items, null);
+
             }
         }
 
@@ -230,7 +249,12 @@ namespace WorkBreakReminder
 
         private void systemTrayIcon_Click(object sender, EventArgs e)
         {
-            ShowAppInNormalWindowSize();
+            var clickEvent = e as MouseEventArgs;
+            if (clickEvent == null || clickEvent.Button == MouseButtons.Left)
+                if (this.WindowState != FormWindowState.Normal)
+                    ShowAppInNormalWindowSize();
+                else
+                    MinimizeWindow();
         }
 
         private void ShowAppInNormalWindowSize()
@@ -271,6 +295,10 @@ namespace WorkBreakReminder
                 this.userForcedClose = true;
                 this.Close();
             }
+            else if (e.ClickedItem.Tag == "Show")
+            {
+                ShowAppInNormalWindowSize();
+            }
 
         }
 
@@ -308,6 +336,25 @@ namespace WorkBreakReminder
         {
             btnPauseReminder.Text = "Resume";
             btnPauseReminder.Tag = ReminderAppPaused;
+        }
+
+        private async void pastMusicFilesList_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if (pastMusicFilesList.SelectedValue == null)
+                return;
+
+            var selectedFile = pastMusicFilesList.SelectedValue.ToString();
+            var currentSettings = await this.reminderLogic.GetCurrentSettingsAsync();
+            if (selectedFile != currentSettings.MusicLocation)
+            {
+                this.musicLocation = selectedFile;
+                await this.SavePreferencesAsync();
+            }
+        }
+
+        private void gotoSettingsButton_Click(object sender, EventArgs e)
+        {
+            tabControl.SelectTab("tabOptions");
         }
     }
 }

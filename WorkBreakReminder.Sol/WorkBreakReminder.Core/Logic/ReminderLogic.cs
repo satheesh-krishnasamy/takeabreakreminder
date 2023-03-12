@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Media;
 using System.Text;
 using System.Threading;
@@ -138,6 +139,10 @@ namespace WorkBreakReminder.Core.Logic
         public async Task<bool> ResetToDefaultSettingsAsync()
         {
             var defaultSettings = GetDefaultSettingsInternal();
+
+            // Keep the recent files
+            defaultSettings.RecentReminderFiles = this.reminderSettings.RecentReminderFiles;
+
             var saveResult = await this.SaveSettingsAsync(defaultSettings);
             if (saveResult.IsSavedSuccessfully)
             {
@@ -208,6 +213,16 @@ namespace WorkBreakReminder.Core.Logic
                     if (musicLocationValidationResult.IsValid)
                     {
                         this.reminderSettings.MusicLocation = settingsToSave.MusicLocation;
+
+                        var existingFile = this.reminderSettings.RecentReminderFiles.FirstOrDefault(f => f.FilePath == this.reminderSettings.MusicLocation);
+                        if (existingFile == null)
+                        {
+                            this.reminderSettings.RecentReminderFiles.Add(new RecentFile(this.reminderSettings.MusicLocation));
+                        }
+                        else
+                        {
+                            existingFile.AccessedOn = DateTimeOffset.UnixEpoch.Ticks;
+                        }
                     }
                     else
                     {
@@ -227,15 +242,6 @@ namespace WorkBreakReminder.Core.Logic
                         await this.PlayReminderMusicAsync().ConfigureAwait(false);
                     }
                 }
-
-                //else if (shouldSaveTimerInterval)
-                //{
-                //    this.ResetTimerTimeout();
-                //    this.reminderView.BeforeInitViewCallback();
-                //    this.SetReminderSummary();
-                //    this.reminderView.AfterInitViewCallback();
-                //}
-                
 
                 if (errors.Length > 0)
                     return new SaveSettingsResult(false, new Exception(errors.ToString()));
