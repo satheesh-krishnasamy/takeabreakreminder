@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,11 +16,11 @@ using WorkBreakReminder.Core.View;
 
 namespace WorkBreakReminder
 {
-    public partial class mainForm : Form, IReminderView
+    public partial class mainForm : Form, IReminderView, IDisposable
     {
         private const string ReminderAppPaused = "Paused";
         private const string ReminderAppCanBePaused = "CanBePaused";
-
+        private const string titleTextPrefix = "Take a break reminder";
         private readonly IReminderStorage<ReminderSettings, string> storage;
         private readonly IReminderLogic reminderLogic;
         private string musicLocation;
@@ -33,6 +34,10 @@ namespace WorkBreakReminder
             this.storage = new UserProfileFileStorage<ReminderSettings>();
             this.reminderLogic = new ReminderLogic(this, this.storage, new AppSettingsReadonly(appSettings));
             this.reminderLogic.InitializeAsync();
+
+            SystemEvents.PowerModeChanged += SystemEvents_OnPowerModeChanged;
+
+            this.Text = titleTextPrefix + " - " + this.ProductVersion;
         }
 
         private delegate void UpdateControlsDelegate(IReminderSettingsReadOnly args);
@@ -106,7 +111,6 @@ namespace WorkBreakReminder
                     this.musicLocation = reminderSettings.MusicLocation;
                     this.chkBoxPopupOnReminder.Checked = reminderSettings.PopupWindowOnEachReminder;
                     this.chkBoxClosePreference.Checked = reminderSettings.MinimizeOnCloseWindow;
-                    //this.musicLocationLabel.Text = Path.GetFileName(reminderSettings.MusicLocation);
                     BindRecentMusicFilesDropdownList(reminderSettings.RecentReminderFiles);
                 }
             }
@@ -243,18 +247,24 @@ namespace WorkBreakReminder
 
         private void showNextReminderInBaloonNotification()
         {
-            systemTrayIcon.BalloonTipTitle = this.Text;
-            systemTrayIcon.ShowBalloonTip(500, this.Text, this.reminderInfoLabel.Text, ToolTipIcon.Info);
+            systemTrayIcon.BalloonTipTitle = titleTextPrefix;
+            systemTrayIcon.ShowBalloonTip(500, titleTextPrefix, this.reminderInfoLabel.Text, ToolTipIcon.Info);
         }
 
         private void systemTrayIcon_Click(object sender, EventArgs e)
         {
-            var clickEvent = e as MouseEventArgs;
-            if (clickEvent == null || clickEvent.Button == MouseButtons.Left)
-                if (this.WindowState != FormWindowState.Normal)
+            var mouseClickEvent = e as MouseEventArgs;
+            if (e == null || mouseClickEvent == null || mouseClickEvent.Button == MouseButtons.Left)
+            {
+                if (this.WindowState == FormWindowState.Minimized)
+                {
                     ShowAppInNormalWindowSize();
+                }
                 else
-                    MinimizeWindow();
+                {
+                    this.MinimizeWindow();
+                }
+            }
         }
 
         private void ShowAppInNormalWindowSize()
@@ -338,6 +348,12 @@ namespace WorkBreakReminder
             btnPauseReminder.Tag = ReminderAppPaused;
         }
 
+        private void SystemEvents_OnPowerModeChanged(object sender, PowerModeChangedEventArgs e)
+        {
+            if (e.Mode == PowerModes.Resume)
+                this.reminderLogic.ResetReminder();
+        }
+
         private async void pastMusicFilesList_SelectionChangeCommitted(object sender, EventArgs e)
         {
             if (pastMusicFilesList.SelectedValue == null)
@@ -355,6 +371,43 @@ namespace WorkBreakReminder
         private void gotoSettingsButton_Click(object sender, EventArgs e)
         {
             tabControl.SelectTab("tabOptions");
+        }
+
+
+        public void Dispose()
+        {
+            this.DisposeInternal(true);
+        }
+
+        private void DisposeInternal(bool isCalledExplicitly)
+        {
+            if (isCalledExplicitly)
+                GC.SuppressFinalize(this);
+
+            try
+            {
+                base.Dispose();
+                SystemEvents.PowerModeChanged -= SystemEvents_OnPowerModeChanged;
+            }
+            catch (Exception ex) { Console.WriteLine(ex.Message + " ST: " + ex.StackTrace); }
+        }
+
+        ~mainForm()
+        {
+            this.DisposeInternal(false);
+        }
+
+        private void mainForm_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                this.releaseNotesTextBox.Text = File.ReadAllText("releasenotes.txt");
+            }
+            catch (Exception exp)
+            {
+                this.releaseNotesTextBox.Text = exp.Message;
+            }
+            this.releaseNotesTextBox.ReadOnly = true;
         }
     }
 }

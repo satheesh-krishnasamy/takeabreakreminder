@@ -10,7 +10,7 @@ namespace WorkBreakReminder.Core.Model
             string musicFileLocation,
             ushort reminderIntervalInMinutes,
             bool minimizeWindowOnClose,
-            bool popupOnReminder)
+            bool popupOnReminder): this()
         {
             this.MusicLocation = musicFileLocation;
             this.ReminderIntervalInMinutes = reminderIntervalInMinutes;

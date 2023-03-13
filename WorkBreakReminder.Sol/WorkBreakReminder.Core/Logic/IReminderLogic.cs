@@ -55,5 +55,7 @@ namespace WorkBreakReminder.Core.Logic
         /// </summary>
         /// <returns></returns>
         Task<bool> CancelDNDAsync();
+
+        bool ResetReminder();
     }
 }

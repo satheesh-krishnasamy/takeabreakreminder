@@ -1,0 +1,7 @@
+﻿Nov/29/2022
+--------------------
+* 1. Reset the timer on system events - when system resumed from hibernation.
+
+March/12/2023
+--------------------
++ 1. Recently used music files can be used from dropdown for quick revert.

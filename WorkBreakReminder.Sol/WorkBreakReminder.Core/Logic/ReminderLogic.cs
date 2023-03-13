@@ -121,6 +121,11 @@ namespace WorkBreakReminder.Core.Logic
                     reminderSettings = this.GetDefaultSettingsInternal();
                 }
 
+                if (reminderSettings.RecentReminderFiles.Count == 0)
+                {
+                    reminderSettings.RecentReminderFiles.Add(new RecentFile(reminderSettings.MusicLocation));
+                }
+
                 return reminderSettings;
             }
             catch
@@ -160,9 +165,16 @@ namespace WorkBreakReminder.Core.Logic
         {
             await Task.Run(() =>
             {
-                using (var soundPlayer = new SoundPlayer(this.reminderSettings.MusicLocation))
+                try
                 {
-                    soundPlayer.Play(); // can also use soundPlayer.PlaySync()
+                    using (var soundPlayer = new SoundPlayer(this.reminderSettings.MusicLocation))
+                    {
+                        soundPlayer.Play(); // can also use soundPlayer.PlaySync()
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error in playing reminder music preferences." + ex.Message + Environment.NewLine + ex.StackTrace);
                 }
             });
         }
@@ -296,6 +308,12 @@ namespace WorkBreakReminder.Core.Logic
                     // cannot do anything; just exit.
                 }
             }
+        }
+
+        public bool ResetReminder()
+        {
+            ResetTimerAndUpdateUI();
+            return true;
         }
     }
 }
