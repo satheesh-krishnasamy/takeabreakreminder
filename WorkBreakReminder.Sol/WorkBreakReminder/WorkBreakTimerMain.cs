@@ -111,7 +111,7 @@ namespace WorkBreakReminder
                     this.musicLocation = reminderSettings.MusicLocation;
                     this.chkBoxPopupOnReminder.Checked = reminderSettings.PopupWindowOnEachReminder;
                     this.chkBoxClosePreference.Checked = reminderSettings.MinimizeOnCloseWindow;
-                    BindRecentMusicFilesDropdownList(reminderSettings.RecentReminderFiles);
+                    BindRecentMusicFilesDropdownList(reminderSettings.RecentReminderFiles, reminderSettings.MusicLocation);
                 }
             }
         }
@@ -150,7 +150,7 @@ namespace WorkBreakReminder
                     ));
 
                 var reminderSettings = await this.reminderLogic.GetCurrentSettingsAsync();
-                BindRecentMusicFilesDropdownList(reminderSettings.RecentReminderFiles);
+                BindRecentMusicFilesDropdownList(reminderSettings.RecentReminderFiles, reminderSettings.MusicLocation);
 
             }
             catch (Exception exp)
@@ -162,14 +162,48 @@ namespace WorkBreakReminder
             }
         }
 
-        private void BindRecentMusicFilesDropdownList(List<RecentFile> recentFiles)
+        private void BindRecentMusicFilesDropdownList(List<RecentFile> recentFiles, string currentMusicFile)
         {
             if (recentFiles != null && recentFiles.Count > 0)
             {
+
+                if (pastMusicFilesList.Items != null && !string.IsNullOrWhiteSpace(currentMusicFile))
+                {
+                    foreach (RecentFile ddlItem in pastMusicFilesList.Items)
+                    {
+                        if (currentMusicFile.Equals(ddlItem.FilePath))
+                        {
+                            return;
+                        }
+                    }
+                }
+
+
                 var items = recentFiles.OrderByDescending(p => p.AccessedOn);
                 pastMusicFilesList.DisplayMember = "FileName";
                 pastMusicFilesList.ValueMember = "FilePath";
-                pastMusicFilesList.DataSource = new BindingSource(items, null);
+                var bindingSource = new BindingSource(items, null);
+
+                if (!string.IsNullOrWhiteSpace(currentMusicFile))
+                {
+                    int position = -1;
+                    foreach (var recentFile in items)
+                    {
+                        position++;
+                        if (recentFile?.FilePath != null && recentFile.FilePath.Equals(currentMusicFile))
+                        {
+                            break;
+                        }
+                    }
+
+                    if (position < items.Count())
+                    {
+                        bindingSource.Position = position;
+                    }
+                }
+                bindingSource.RaiseListChangedEvents = false;
+                pastMusicFilesList.DataSource = bindingSource;
+                bindingSource.RaiseListChangedEvents = true;
 
             }
         }
